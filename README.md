@@ -1,4 +1,4 @@
-# ReneWind
+# Energy Company Predective Project
 
 This is a test project using sensor data from a Wind Energy Company. 
 
