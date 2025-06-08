@@ -5,7 +5,8 @@ import numpy as np
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import make_scorer, confusion_matrix
 from typing import List, Tuple, Callable
-
+import os
+from joblib import dump
 
 
 #Set up logging
@@ -95,7 +96,13 @@ class ModelEvaluator:
         # Retrieve the actual model object from input
         model_dict = dict(models)
         return best_model_name, model_dict[best_model_name]
-        
+    @staticmethod
+    def save_best_model(name: str, model, path="models"):
+        os.makedirs(path, exist_ok=True)
+        model_path = os.path.join(path, f"{name}_base.pkl")
+        dump(model, model_path)
+        logging.info(f"Best model '{name}' saved to: {model_path}")
+        return model_path
 
 
 # Example usage
