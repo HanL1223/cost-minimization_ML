@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# VS Code settings
+.vscode/
+
+# macOS and Linux file system clutter
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Ignore all data directories
+data/
+**/data/
+*.csv
+*.tsv
+*.xlsx
+*.h5
+*.pt
+*.model
+*.pkl
+
+# Ignore large files tracked by Git LFS
+*.zip
+*.tar.gz
+*.tar
+*.7z
+
+# Ignore experiment outputs
+outputs/
+results/
+data
