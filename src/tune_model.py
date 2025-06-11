@@ -50,7 +50,7 @@ class ModelTunning:
             scoring=custom_scorer,
             cv=cv,
             random_state=random_state,
-            n_jobs=-1
+            n_jobs=1
         )
         logging.info(f"Starting hyperparameter tuning for {best_model_name} ...")
         randomized_cv.fit(X, y)
