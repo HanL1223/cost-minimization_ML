@@ -2,7 +2,7 @@ import pandas as pd
 from src.missing_value_imputation import *
 from zenml import steps
 
-@step
+@steps
 def missing_value_imputation(df:pd.DataFrame,strategy:str = 'mean') -> pd.DataFrame:
     if strategy =='drop':
         handler = MissingValueHandler(DropMissingValue(axis = 0))
