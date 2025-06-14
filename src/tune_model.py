@@ -56,7 +56,6 @@ class ModelTunning:
         randomized_cv.fit(X, y)
         logging.info(f"Best parameters for {best_model_name}: {randomized_cv.best_params_}")
         logging.info(f"Best CV score: {randomized_cv.best_score_:.4f}")
-
         return randomized_cv.best_estimator_
     @staticmethod
     def save_tuned_model(name: str, model, path="models/tuned"):

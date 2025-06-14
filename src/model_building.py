@@ -1,12 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
-
+import joblib
 import pandas as pd
-from sklearn.base import RegressorMixin
-from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.base import ClassifierMixin
+from xgboost import XGBClassifier
 
 # Setup logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -15,102 +13,59 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Abstract Base Class for Model Building Strategy
 class ModelBuildingStrategy(ABC):
     @abstractmethod
-    def build_and_train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> RegressorMixin:
+    def build_and_train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> ClassifierMixin:
         """
         Abstract method to build and train a model.
-
-        Parameters:
-        X_train (pd.DataFrame): The training data features.
-        y_train (pd.Series): The training data labels/target.
-
-        Returns:
-        RegressorMixin: A trained scikit-learn model instance.
         """
         pass
 
 
-# Concrete Strategy for Linear Regression using scikit-learn
-class LinearRegressionStrategy(ModelBuildingStrategy):
-    def build_and_train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> Pipeline:
+# Concrete Strategy: Use a pre-tuned XGBClassifier
+class XGBClassifierStrategy(ModelBuildingStrategy):
+    def build_and_train_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> XGBClassifier:
         """
-        Builds and trains a linear regression model using scikit-learn.
-
-        Parameters:
-        X_train (pd.DataFrame): The training data features.
-        y_train (pd.Series): The training data labels/target.
-
-        Returns:
-        Pipeline: A scikit-learn pipeline with a trained Linear Regression model.
+        Loads a tuned XGBClassifier model and fits it on the provided training data.
         """
-        # Ensure the inputs are of the correct type
-        if not isinstance(X_train, pd.DataFrame):
-            raise TypeError("X_train must be a pandas DataFrame.")
-        if not isinstance(y_train, pd.Series):
-            raise TypeError("y_train must be a pandas Series.")
+        model_path = "models/tuned/Xgboost_tuned.pkl"
 
-        logging.info("Initializing Linear Regression model with scaling.")
+        logging.info(f"Loading tuned XGBClassifier from {model_path}")
+        model = joblib.load(model_path)
 
-        # Creating a pipeline with standard scaling and linear regression
-        pipeline = Pipeline(
-            [
-                ("scaler", StandardScaler()),  # Feature scaling
-                ("model", LinearRegression()),  # Linear regression model
-            ]
-        )
+        if not isinstance(model, XGBClassifier):
+            raise TypeError("Loaded model is not an instance of XGBClassifier.")
 
-        logging.info("Training Linear Regression model.")
-        pipeline.fit(X_train, y_train)  # Fit the pipeline to the training data
+        logging.info("Training the loaded XGBClassifier on the provided training data.")
+        model.fit(X_train, y_train)
 
-        logging.info("Model training completed.")
-        return pipeline
+        logging.info("Model training complete.")
+        return model
 
 
-# Context Class for Model Building
+# Context class
 class ModelBuilder:
     def __init__(self, strategy: ModelBuildingStrategy):
-        """
-        Initializes the ModelBuilder with a specific model building strategy.
-
-        Parameters:
-        strategy (ModelBuildingStrategy): The strategy to be used for model building.
-        """
         self._strategy = strategy
 
     def set_strategy(self, strategy: ModelBuildingStrategy):
-        """
-        Sets a new strategy for the ModelBuilder.
-
-        Parameters:
-        strategy (ModelBuildingStrategy): The new strategy to be used for model building.
-        """
-        logging.info("Switching model building strategy.")
         self._strategy = strategy
 
-    def build_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> RegressorMixin:
-        """
-        Executes the model building and training using the current strategy.
-
-        Parameters:
-        X_train (pd.DataFrame): The training data features.
-        y_train (pd.Series): The training data labels/target.
-
-        Returns:
-        RegressorMixin: A trained scikit-learn model instance.
-        """
-        logging.info("Building and training the model using the selected strategy.")
+    def build_model(self, X_train: pd.DataFrame, y_train: pd.Series) -> ClassifierMixin:
         return self._strategy.build_and_train_model(X_train, y_train)
 
 
 # Example usage
 if __name__ == "__main__":
-    # Example DataFrame (replace with actual data loading)
-    # df = pd.read_csv('your_data.csv')
-    # X_train = df.drop(columns=['target_column'])
-    # y_train = df['target_column']
+    # Replace this with your actual data loading
+    # df = pd.read_csv("your_dataset.csv")
+    # X_train = df.drop(columns=["target"])
+    # y_train = df["target"]
 
-    # Example usage of Linear Regression Strategy
-    # model_builder = ModelBuilder(LinearRegressionStrategy())
-    # trained_model = model_builder.build_model(X_train, y_train)
-    # print(trained_model.named_steps['model'].coef_)  # Print model coefficients
+    # For demonstration, dummy data
+    X_train = pd.DataFrame([[1, 2], [3, 4], [5, 6]])
+    y_train = pd.Series([0, 1, 0])
 
-    pass
+    builder = ModelBuilder(XGBClassifierStrategy())
+    model = builder.build_model(X_train, y_train)
+
+    # Use model.predict(X_test) on your real test set as needed
+    # y_pred = model.predict(X_test)
