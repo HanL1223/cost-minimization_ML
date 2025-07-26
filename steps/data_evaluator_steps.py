@@ -1,48 +1,46 @@
 import logging
-from typing import Tuple
+from typing import Tuple, Dict
 
 import pandas as pd
-from sklearn.pipeline import Pipeline
-from src.model_evaluator import ModelEvaluator, RegressionModelEvaluationStrategy
+from src.model_evaluator import ModelEvaluator, ClassificationModelEvaluationStrategy
 from zenml import step
-
 
 @step(enable_cache=False)
 def model_evaluator_step(
-    trained_model: Pipeline, X_test: pd.DataFrame, y_test: pd.Series
-) -> Tuple[dict, float]:
+    trained_model,  # This is the loaded model, NOT a pipeline
+    X_test: pd.DataFrame,
+    y_test: pd.Series
+) -> Tuple[Dict[str, float], float]:
     """
-    Evaluates the trained model using ModelEvaluator and RegressionModelEvaluationStrategy.
+    Evaluates the trained classification model using ModelEvaluator and ClassificationModelEvaluationStrategy.
 
     Parameters:
-    trained_model:The Model path 
-    X_test (pd.DataFrame): The test data features.
-    y_test (pd.Series): The test data labels/target.
+    trained_model: Loaded trained model (e.g., XGBClassifier instance)
+    X_test (pd.DataFrame): Test features.
+    y_test (pd.Series): True labels for test data.
 
     Returns:
-    dict: A dictionary containing evaluation metrics.
+    Tuple containing:
+    - dict: Dictionary of evaluation metrics.
+    - float: The custom "Minimum_Vs_Model_cost" metric for cost comparison.
     """
-    # Ensure the inputs are of the correct type
+
     if not isinstance(X_test, pd.DataFrame):
         raise TypeError("X_test must be a pandas DataFrame.")
     if not isinstance(y_test, pd.Series):
         raise TypeError("y_test must be a pandas Series.")
 
-    logging.info("Applying the same preprocessing to the test data.")
+    logging.info("Evaluating the trained classification model.")
 
-    # Apply the preprocessing and model prediction
-    X_test_processed = trained_model.named_steps["preprocessor"].transform(X_test)
+    # Initialize evaluator with your classification strategy
+    evaluator = ModelEvaluator(strategy=ClassificationModelEvaluationStrategy())
 
-    # Initialize the evaluator with the regression strategy
-    evaluator = ModelEvaluator(strategy=RegressionModelEvaluationStrategy())
+    # Evaluate model
+    evaluation_metrics = evaluator.evaluate(trained_model, X_test, y_test)
 
-    # Perform the evaluation
-    evaluation_metrics = evaluator.evaluate(
-        trained_model.named_steps["model"], X_test_processed, y_test
-    )
-
-    # Ensure that the evaluation metrics are returned as a dictionary
     if not isinstance(evaluation_metrics, dict):
         raise ValueError("Evaluation metrics must be returned as a dictionary.")
-    mse = evaluation_metrics.get("Mean Squared Error", None)
-    return evaluation_metrics, mse
+
+    min_vs_model_cost = evaluation_metrics.get("Minimum_Vs_Model_cost", None)
+
+    return evaluation_metrics, min_vs_model_cost
